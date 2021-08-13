@@ -16,22 +16,21 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import ui.CommandLineInterface;
-
-
 public class ReanaDiff {
-
-  private static final String FILENAME_1 = "./evo_add_frag/1.xml";
-  private static final String FILENAME_2 = "./evo_add_frag/20.xml";
   private static final String OUT_DIR = "./out_models/";
-
-  // private static final String FILENAME_1 = "./evo_msg/1.xml";
-  // private static final String FILENAME_2 = "./evo_msg/2.xml";
-
   public static void main(String[] args) {
 
       // Instantiate the Factory
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+      if (args.length != 3) {
+        System.out.print("Usage: java ReanaDiff.java <initial behavioral model path> <final behavioral model path>");
+        return;
+      }
+
+      String filename_1 = args[1];
+      String filename_2 = args[2];
+
 
       try {
           // optional, but recommended
@@ -41,8 +40,8 @@ public class ReanaDiff {
           // parse XML file
           DocumentBuilder db = dbf.newDocumentBuilder();
 
-          Document doc_1 = db.parse(new File(FILENAME_1));
-          Document doc_2 = db.parse(new File(FILENAME_2));
+          Document doc_1 = db.parse(new File(filename_1));
+          Document doc_2 = db.parse(new File(filename_2));
 
           // optional, but recommended
           // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
@@ -148,7 +147,7 @@ public class ReanaDiff {
           ArrayList<String> val = entry.getValue();
 
           if (val.size() > 0) {
-            System.out.println("\tFragment " + key + ":");
+            System.out.println("\tWithin fragment " + key + ":");
             decomposed_evolution.add("F " + key);
 
             for (String s: val) {
@@ -159,25 +158,24 @@ public class ReanaDiff {
         }
       }
 
-      File out_dir = new File("./out_models/");
+      File out_dir = new File(OUT_DIR);
       out_dir.mkdirs();
-      File orig = new File(FILENAME_1);
+      File orig = new File(filename_1);
       File dest = new File(out_dir, "1.xml");
       
       Files.copy(orig.toPath(), dest.toPath());
-
       Runtime r = Runtime.getRuntime();
 
       int idx = 2;
       String act = "sequenceDiagram1";
 
-      for (String evo: decomposed_evolution) {
-        if (evo.charAt(0) == 'F') {
-          String f_name = evo.substring(2);
-          String command = "java -jar spl-generator.jar --add frag sequenceDiagram1 " + f_name + " SD_0 true 0";
-          r.exec(command);
-        }
-      }
+      // for (String evo: decomposed_evolution) {
+      //   if (evo.charAt(0) == 'F') {
+      //     String f_name = evo.substring(2);
+      //     String command = "java -jar spl_generator.jar --add frag sequenceDiagram1 " + f_name + " SD_0 true 0";
+      //     r.exec(command);
+      //   }
+      // }
 
       } catch (ParserConfigurationException | SAXException | IOException e) {
           e.printStackTrace();
