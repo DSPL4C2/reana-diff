@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	<featureModel>
+		<properties/>
+		<struct>
+			<and abstract="true" mandatory="true" name="MinePump">
+				<description>
+					
+				</description>
+				<or name="Command">
+					<description>
+						
+					</description>
+					<feature mandatory="true" name="Start">
+						<description>
+							
+						</description>
+					</feature>
+					<feature mandatory="true" name="Stop">
+						<description>
+							
+						</description>
+					</feature>
+				</or>
+				<or name="MethaneSensor">
+					<description>
+						
+					</description>
+					<feature mandatory="true" name="Alarm">
+						<description>
+							
+						</description>
+					</feature>
+					<feature mandatory="true" name="Query">
+						<description>
+							
+						</description>
+					</feature>
+				</or>
+				<and mandatory="true" name="WaterSensor">
+					<description>
+						
+					</description>
+					<feature name="Low">
+						<description>
+							
+						</description>
+					</feature>
+					<feature name="Normal">
+						<description>
+							
+						</description>
+					</feature>
+					<feature name="High">
+						<description>
+							
+						</description>
+					</feature>
+				</and>
+			</and>
+		</struct>
+		<constraints/>
+		<calculations Auto="true" Constraints="true" Features="true" Redundant="true" Tautology="true"/>
+		<comments/>
+		<featureOrder userDefined="false"/>
+	</featureModel>
