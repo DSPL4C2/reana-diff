@@ -9,7 +9,7 @@
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}",
-            "args": ["evo_pc/enfraquecer/1.xml", "evo_pc/enfraquecer/10.xml"]
+            "args": ["fmLift0.txt", "fmLift1.txt"]
         },
         {
             "type": "java",
