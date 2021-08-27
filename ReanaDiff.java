@@ -1,6 +1,6 @@
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,21 +16,23 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import java.nio.file.Paths;
+import java.security.Guard;
+
 public class ReanaDiff {
-  private static final String OUT_DIR = "./out_models/";
+  private static final String OUT_DIR = "./diff_";
   public static void main(String[] args) {
 
       // Instantiate the Factory
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 
-      if (args.length != 3) {
+      if (args.length != 2) {
         System.out.print("Usage: java ReanaDiff.java <initial behavioral model path> <final behavioral model path>");
         return;
       }
 
-      String filename_1 = args[1];
-      String filename_2 = args[2];
-
+      String filename_1 = args[0];
+      String filename_2 = args[1];
 
       try {
           // optional, but recommended
@@ -55,15 +57,21 @@ public class ReanaDiff {
           Map<String, ArrayList<String>> messages1_map = new HashMap<String, ArrayList<String>>();
           Map<String, ArrayList<String>> messages2_map = new HashMap<String, ArrayList<String>>();
 
+          Map<String, ArrayList<String>> diff_guard = new HashMap<String, ArrayList<String>>();
+
           for (int temp = 0; temp < list_1.getLength(); temp++) {
               Node node = list_1.item(temp);
 
               if (node.getNodeType() == Node.ELEMENT_NODE) {
-
                   Element element = (Element) node;
 
                   // get sequence diagrams's name
                   String id = element.getAttribute("name");
+                  String guard = element.getAttribute("guard");
+
+                  diff_guard.put(id, new ArrayList<String>());
+                  diff_guard.get(id).add(guard);
+
                   messages1_map.put(id, new ArrayList<String>());
 
                   // get messages
@@ -81,13 +89,17 @@ public class ReanaDiff {
             Node node = list_2.item(temp);
 
             if (node.getNodeType() == Node.ELEMENT_NODE) {
-
                 Element element = (Element) node;
 
                   // get sequence diagrams's name 
                   String id = element.getAttribute("name");
+                  String guard = element.getAttribute("guard");
+
                   messages2_map.put(id, new ArrayList<String>());
 
+                  if (diff_guard.containsKey(id)) {
+                    diff_guard.get(id).add(guard);
+                  }
 
                   // get messages
                   NodeList messages = element.getElementsByTagName("Message");
@@ -119,23 +131,30 @@ public class ReanaDiff {
         String key = entry.getKey();
 
         ArrayList<String> val_1 = new ArrayList<String> (entry.getValue());
-
         ArrayList<String> val_2 = messages1_map.get(key);
 
         if (val_2 != null) {
           val_1.removeAll(val_2);
         }
 
-        diff_messages.put(key, val_1);
+        if (val_1.size() > 0) {
+          diff_messages.put(key, val_1);
+        }
       }
 
-      ArrayList<String> decomposed_evolution = new ArrayList<String>();
+      String f1_name = Paths.get(filename_1).getFileName().toString();
+      String f2_name = Paths.get(filename_2).getFileName().toString();
+
+      PrintWriter file_diff_frags = new PrintWriter("frags_" + f1_name + "_" + f2_name + ".txt");
+      PrintWriter file_msg_frags = new PrintWriter("msg_" + f1_name + "_" + f2_name + ".txt");
+      PrintWriter file_pc_frags = new PrintWriter("pc_" + f1_name + "_" + f2_name + ".txt");
 
       if (diff_fragments.size() > 0) {
         System.out.println("New Fragments:");
 
         for (String key: diff_fragments) {
           System.out.println('\t' + key);
+          file_diff_frags.println(key);
         }
       }
 
@@ -145,37 +164,38 @@ public class ReanaDiff {
         for (Map.Entry<String, ArrayList<String>> entry: diff_messages.entrySet()) {
           String key = entry.getKey();
           ArrayList<String> val = entry.getValue();
-
+          
           if (val.size() > 0) {
-            System.out.println("\tWithin fragment " + key + ":");
-            decomposed_evolution.add("F " + key);
+            System.out.println("\tInside fragment " + key + ":");
+            file_msg_frags.print(key+":");
 
             for (String s: val) {
               System.out.println("\t\t" + s);
-              decomposed_evolution.add("M " + s);
+              file_msg_frags.print(s + ";");
             }
+
+            file_msg_frags.println();
           }
         }
       }
 
-      File out_dir = new File(OUT_DIR);
-      out_dir.mkdirs();
-      File orig = new File(filename_1);
-      File dest = new File(out_dir, "1.xml");
-      
-      Files.copy(orig.toPath(), dest.toPath());
-      Runtime r = Runtime.getRuntime();
+      if (diff_guard.size() > 0) {
+        System.out.println("Guard condition:");
+        
+        for (Map.Entry<String, ArrayList<String>> entry: diff_guard.entrySet()) {
+          String key = entry.getKey();
+          ArrayList<String> val = entry.getValue();
 
-      int idx = 2;
-      String act = "sequenceDiagram1";
+          if (!val.get(0).equals(val.get(1))) {
+            System.out.println("\t" + key + ": \"" + val.get(0) + "\" => \"" + val.get(1) + "\"");
+            file_pc_frags.println(key + ": \"" + val.get(0) + "\" => \"" + val.get(1) + "\"");
+          }
+        }
+      }
 
-      // for (String evo: decomposed_evolution) {
-      //   if (evo.charAt(0) == 'F') {
-      //     String f_name = evo.substring(2);
-      //     String command = "java -jar spl_generator.jar --add frag sequenceDiagram1 " + f_name + " SD_0 true 0";
-      //     r.exec(command);
-      //   }
-      // }
+      file_diff_frags.close();
+      file_msg_frags.close();
+      file_pc_frags.close();
 
       } catch (ParserConfigurationException | SAXException | IOException e) {
           e.printStackTrace();

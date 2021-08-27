@@ -14,7 +14,7 @@
         </Transitions>
     </ActivityDiagram>
     <SequenceDiagrams>
-        <SequenceDiagram guard="Park" name="n22">
+        <SequenceDiagram guard="Park &amp;&amp; Shuttle" name="n22">
             <Message name="lift_idle" probability="0.999" source="Mock lifeline" target="Lifeline_0" type="synchronous" />
             <Message name="time_of_the_day" probability="0.999" source="Mock lifeline" target="Lifeline_0" type="synchronous" />
             <Message name="go_to_first_floor" probability="0.999" source="Mock lifeline" target="Lifeline_0" type="synchronous" />
